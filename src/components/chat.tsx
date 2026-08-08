@@ -530,22 +530,36 @@ BEHAVIOR:
       // VERCEL API
       // =================================================
 
-const response = await fetch("/api/chat", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    message: text,
-    systemInstruction: AI_SYSTEM_INSTRUCTION,
-    history: conversationHistory.map(
-      (message) => ({
-        role: message.role,
-        content: message.content,
-      })
-    ),
-  }),
-});
+ const response = await fetch(
+  "http://localhost:5000/chat",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                message: text,
+
+                systemInstruction:
+                  AI_SYSTEM_INSTRUCTION,
+
+                history:
+                  conversationHistory.map(
+                    (message) => ({
+                      role:
+                        message.role,
+
+                      content:
+                        message.content,
+                    })
+                  ),
+              }),
+          }
+        );
 
       // =================================================
       // READ RESPONSE
