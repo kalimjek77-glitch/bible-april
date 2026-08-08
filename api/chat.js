@@ -1,8 +1,22 @@
-```js
-// api/chat.js
-
 export default async function handler(req, res) {
-  // Allow POST only
+  // =====================================================
+  // CORS / METHOD
+  // =====================================================
+
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "POST, OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed. Use POST.",
@@ -10,35 +24,44 @@ export default async function handler(req, res) {
   }
 
   try {
+    // ===================================================
+    // CHECK API KEY
+    // ===================================================
+
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error:
+          "GEMINI_API_KEY is not configured in Vercel.",
+      });
+    }
+
+    // ===================================================
+    // REQUEST BODY
+    // ===================================================
+
     const {
       message,
       systemInstruction,
       history = [],
     } = req.body || {};
 
-    if (!message || typeof message !== "string") {
+    if (
+      typeof message !== "string" ||
+      !message.trim()
+    ) {
       return res.status(400).json({
         error: "Message is required.",
       });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    // ===================================================
+    // CONVERSATION
+    // ===================================================
 
-    if (!apiKey) {
-      console.error(
-        "GEMINI_API_KEY is not configured."
-      );
-
-      return res.status(500).json({
-        error:
-          "Gemini API key is not configured on the server.",
-      });
-    }
-
-    // Build conversation for Gemini
     const contents = [];
 
-    // Previous conversation
     if (Array.isArray(history)) {
       for (const item of history) {
         if (
@@ -48,12 +71,13 @@ export default async function handler(req, res) {
           continue;
         }
 
-        contents.push({
-          role:
-            item.role === "assistant"
-              ? "model"
-              : "user",
+        const role =
+          item.role === "assistant"
+            ? "model"
+            : "user";
 
+        contents.push({
+          role,
           parts: [
             {
               text: item.content,
@@ -63,26 +87,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // Make sure the current message is included
-    const lastMessage =
-      contents[contents.length - 1];
+    // ===================================================
+    // GEMINI API
+    // ===================================================
 
-    if (
-      !lastMessage ||
-      lastMessage.role !== "user" ||
-      lastMessage.parts?.[0]?.text !== message
-    ) {
-      contents.push({
-        role: "user",
-        parts: [
-          {
-            text: message,
-          },
-        ],
-      });
-    }
-
-    // Gemini API
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
       {
@@ -102,12 +110,22 @@ export default async function handler(req, res) {
               {
                 text:
                   systemInstruction ||
-                  "You are April, a helpful AI assistant.",
+                  "You are a helpful AI assistant.",
               },
             ],
           },
 
-          contents,
+          contents: [
+            ...contents,
+            {
+              role: "user",
+              parts: [
+                {
+                  text: message,
+                },
+              ],
+            },
+          ],
 
           generationConfig: {
             temperature: 0.7,
@@ -117,7 +135,12 @@ export default async function handler(req, res) {
       }
     );
 
-    const data = await response.json();
+    // ===================================================
+    // GEMINI RESPONSE
+    // ===================================================
+
+    const data =
+      await response.json();
 
     if (!response.ok) {
       console.error(
@@ -125,12 +148,18 @@ export default async function handler(req, res) {
         data
       );
 
-      return res.status(response.status).json({
+      return res.status(
+        response.status
+      ).json({
         error:
           data?.error?.message ||
           "Gemini API request failed.",
       });
     }
+
+    // ===================================================
+    // EXTRACT TEXT
+    // ===================================================
 
     const reply =
       data?.candidates?.[0]?.content?.parts
@@ -150,12 +179,16 @@ export default async function handler(req, res) {
       });
     }
 
+    // ===================================================
+    // SUCCESS
+    // ===================================================
+
     return res.status(200).json({
       reply,
     });
   } catch (error) {
     console.error(
-      "API /api/chat error:",
+      "API error:",
       error
     );
 
@@ -167,4 +200,3 @@ export default async function handler(req, res) {
     });
   }
 }
-```

@@ -532,7 +532,7 @@ BEHAVIOR:
 
       const response =
         await fetch(
-          "/api/chat",
+          "http://localhost:5000/api/chat",
           {
             method: "POST",
 
