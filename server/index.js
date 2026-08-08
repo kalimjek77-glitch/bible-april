@@ -13,9 +13,9 @@ const ai = new GoogleGenAI({
 });
 
 /*
-====================================================
+=====================================================
 APRIL PERSONALITY
-====================================================
+=====================================================
 */
 
 const APRIL_SYSTEM_INSTRUCTION = `
@@ -99,10 +99,6 @@ Do not ask the user to repeat information that already exists
 in the conversation history unless the previous conversation
 does not contain enough information.
 
-====================================================
-IDENTITY
-====================================================
-
 Your name is April.
 
 If asked "Who are you?", answer naturally:
@@ -125,15 +121,12 @@ If asked "Are you human?", answer:
 "No. I'm an AI assistant named April."
 
 Never introduce yourself as:
+
 - "a large language model trained by Google"
 - "Google Gemini"
 - "Assistant"
 
 Your name is April.
-
-====================================================
-BEHAVIOR
-====================================================
 
 - Be friendly and natural.
 - Be conversational.
@@ -153,28 +146,13 @@ BEHAVIOR
   learning questions, writing questions, and everyday questions.
 `;
 
-
 /*
-====================================================
-HOME
-====================================================
+=====================================================
+CHAT HANDLER
+=====================================================
 */
 
-app.get("/", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "April AI backend is running",
-  });
-});
-
-
-/*
-====================================================
-CHAT
-====================================================
-*/
-
-app.post("/chat", async (req, res) => {
+async function handleChat(req, res) {
   try {
     const {
       message,
@@ -196,7 +174,6 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-
     /*
     ------------------------------------------------
     APRIL INSTRUCTIONS
@@ -211,18 +188,9 @@ Additional instructions from the React application:
 ${systemInstruction || ""}
 `;
 
-
     /*
     ------------------------------------------------
     CONVERT CHAT HISTORY
-    ------------------------------------------------
-
-    React:
-      user      -> Gemini user
-      assistant -> Gemini model
-
-    The order is preserved so Gemini can understand
-    what happened previously.
     ------------------------------------------------
     */
 
@@ -230,7 +198,6 @@ ${systemInstruction || ""}
 
     if (Array.isArray(history)) {
       for (const item of history) {
-
         if (
           !item ||
           !item.content ||
@@ -246,7 +213,6 @@ ${systemInstruction || ""}
 
         contents.push({
           role: role,
-
           parts: [
             {
               text: String(item.content),
@@ -255,7 +221,6 @@ ${systemInstruction || ""}
         });
       }
     }
-
 
     /*
     ------------------------------------------------
@@ -271,10 +236,8 @@ ${systemInstruction || ""}
       lastMessage.role !== "user" ||
       lastMessage.parts?.[0]?.text !== message
     ) {
-
       contents.push({
         role: "user",
-
         parts: [
           {
             text: message,
@@ -283,10 +246,9 @@ ${systemInstruction || ""}
       });
     }
 
-
     /*
     ------------------------------------------------
-    DEBUG CONVERSATION
+    DEBUG
     ------------------------------------------------
     */
 
@@ -294,7 +256,6 @@ ${systemInstruction || ""}
       "Conversation messages:",
       contents.length
     );
-
 
     /*
     ------------------------------------------------
@@ -304,7 +265,6 @@ ${systemInstruction || ""}
 
     const result =
       await ai.models.generateContent({
-
         model: "gemini-3.5-flash-lite",
 
         config: {
@@ -319,7 +279,6 @@ ${systemInstruction || ""}
         contents: contents,
       });
 
-
     /*
     ------------------------------------------------
     GET APRIL RESPONSE
@@ -330,7 +289,6 @@ ${systemInstruction || ""}
 
     console.log("April:", reply);
 
-
     if (!reply) {
       return res.status(500).json({
         error:
@@ -338,41 +296,77 @@ ${systemInstruction || ""}
       });
     }
 
-
     /*
     ------------------------------------------------
-    RETURN RESPONSE TO REACT
+    RETURN RESPONSE
     ------------------------------------------------
     */
 
-    res.json({
+    return res.json({
       reply: reply,
     });
 
   } catch (error) {
-
     console.error(
       "GEMINI ERROR:",
       error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       error:
         error.message ||
         "Gemini request failed",
     });
   }
-});
-
+}
 
 /*
-====================================================
-START SERVER
-====================================================
+=====================================================
+HOME
+=====================================================
 */
 
-app.listen(5000, () => {
+app.get("/", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "April AI backend is running",
+  });
+});
+
+/*
+=====================================================
+CHAT ENDPOINT
+=====================================================
+
+http://localhost:5000/chat
+=====================================================
+*/
+
+app.post("/chat", handleChat);
+
+/*
+=====================================================
+API CHAT ENDPOINT
+=====================================================
+
+http://localhost:5000/api/chat
+
+This also works locally.
+=====================================================
+*/
+
+app.post("/api/chat", handleChat);
+
+/*
+=====================================================
+START SERVER
+=====================================================
+*/
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
   console.log(
-    "Gemini AI backend running at http://localhost:5000"
+    `Gemini AI backend running at http://localhost:${PORT}`
   );
 });
