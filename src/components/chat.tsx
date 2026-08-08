@@ -530,9 +530,9 @@ BEHAVIOR:
       // VERCEL API
       // =================================================
 
-const response =
-  await fetch(
-    "/api/chat",
+      const response =
+        await fetch(
+          "/api/chat",
           {
             method: "POST",
 
