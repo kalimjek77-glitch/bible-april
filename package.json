@@ -10,7 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^2.16.0",
     "axios": "^1.19.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
