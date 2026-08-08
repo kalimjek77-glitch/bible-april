@@ -530,36 +530,79 @@ BEHAVIOR:
       // VERCEL API
       // =================================================
 
- const response = await fetch(
-  "http://localhost:5000/chat",
-          {
-            method: "POST",
+let response: Response;
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+try {
+  // =================================================
+  // LOCAL SERVER — PORT 5000
+  // =================================================
 
-            body:
-              JSON.stringify({
-                message: text,
+  response = await fetch(
+    "http://localhost:5000/chat",
+    {
+      method: "POST",
 
-                systemInstruction:
-                  AI_SYSTEM_INSTRUCTION,
+      headers: {
+        "Content-Type": "application/json",
+      },
 
-                history:
-                  conversationHistory.map(
-                    (message) => ({
-                      role:
-                        message.role,
+      body: JSON.stringify({
+        message: text,
 
-                      content:
-                        message.content,
-                    })
-                  ),
-              }),
-          }
-        );
+        systemInstruction:
+          AI_SYSTEM_INSTRUCTION,
+
+        history:
+          conversationHistory.map(
+            (message) => ({
+              role: message.role,
+              content: message.content,
+            })
+          ),
+      }),
+    }
+  );
+} catch (localError) {
+  console.warn(
+    "Local API unavailable. Trying Vercel API...",
+    localError
+  );
+
+  // =================================================
+  // VERCEL API — FALLBACK
+  // =================================================
+
+  response = await fetch(
+    "/api/chat",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+
+      body:
+        JSON.stringify({
+          message: text,
+
+          systemInstruction:
+            AI_SYSTEM_INSTRUCTION,
+
+          history:
+            conversationHistory.map(
+              (message) => ({
+                role:
+                  message.role,
+
+                content:
+                  message.content,
+              })
+            ),
+        }),
+    }
+  );
+}
 
       // =================================================
       // READ RESPONSE
