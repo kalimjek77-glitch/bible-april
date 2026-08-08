@@ -1,6 +1,7 @@
-const express = require("express");
-const cors = require("cors");
-const { GoogleGenAI } = require("@google/genai");
+import express from "express";
+import cors from "cors";
+import { GoogleGenAI } from "@google/genai";
+import "dotenv/config";
 
 const app = express();
 
@@ -368,4 +369,4 @@ ${
 // VERCEL EXPORT
 // =====================================================
 
-module.exports = app;
+export default app;
