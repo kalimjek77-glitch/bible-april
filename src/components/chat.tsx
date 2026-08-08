@@ -530,79 +530,22 @@ BEHAVIOR:
       // VERCEL API
       // =================================================
 
-let response: Response;
-
-try {
-  // =================================================
-  // LOCAL SERVER — PORT 5000
-  // =================================================
-
-  response = await fetch(
-    "http://localhost:5000/chat",
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        message: text,
-
-        systemInstruction:
-          AI_SYSTEM_INSTRUCTION,
-
-        history:
-          conversationHistory.map(
-            (message) => ({
-              role: message.role,
-              content: message.content,
-            })
-          ),
-      }),
-    }
-  );
-} catch (localError) {
-  console.warn(
-    "Local API unavailable. Trying Vercel API...",
-    localError
-  );
-
-  // =================================================
-  // VERCEL API — FALLBACK
-  // =================================================
-
-  response = await fetch(
-    "/api/chat",
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
-
-      body:
-        JSON.stringify({
-          message: text,
-
-          systemInstruction:
-            AI_SYSTEM_INSTRUCTION,
-
-          history:
-            conversationHistory.map(
-              (message) => ({
-                role:
-                  message.role,
-
-                content:
-                  message.content,
-              })
-            ),
-        }),
-    }
-  );
-}
+const response = await fetch("/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    message: text,
+    systemInstruction: AI_SYSTEM_INSTRUCTION,
+    history: conversationHistory.map(
+      (message) => ({
+        role: message.role,
+        content: message.content,
+      })
+    ),
+  }),
+});
 
       // =================================================
       // READ RESPONSE
