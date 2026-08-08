@@ -103,10 +103,17 @@ export default function Chat() {
   // AI STATE
   // ===================================================
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [isAIOpen, setIsAIOpen] = useState(false);
+  const [messages, setMessages] =
+    useState<Message[]>([]);
+
+  const [input, setInput] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [isAIOpen, setIsAIOpen] =
+    useState(false);
 
   const messagesEndRef =
     useRef<HTMLDivElement | null>(null);
@@ -145,7 +152,8 @@ export default function Chat() {
     setBibleError("");
 
     try {
-      const reference = `${book} ${chapterNumber}`;
+      const reference =
+        `${book} ${chapterNumber}`;
 
       const response = await fetch(
         `https://bible-api.com/${encodeURIComponent(
@@ -159,7 +167,8 @@ export default function Chat() {
         );
       }
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       const loadedVerses: BibleVerse[] =
         Array.isArray(data.verses)
@@ -169,14 +178,18 @@ export default function Chat() {
                 text: string;
               }) => ({
                 verse: verse.verse,
-                text: verse.text.trim(),
+                text:
+                  verse.text.trim(),
               })
             )
           : [];
 
       setVerses(loadedVerses);
     } catch (error) {
-      console.error("Bible error:", error);
+      console.error(
+        "Bible error:",
+        error
+      );
 
       setBibleError(
         "Unable to load this chapter. Please check your internet connection."
@@ -191,7 +204,10 @@ export default function Chat() {
   // ===================================================
 
   useEffect(() => {
-    loadBible("John", 3);
+    loadBible(
+      "John",
+      3
+    );
   }, []);
 
   // ===================================================
@@ -209,23 +225,28 @@ export default function Chat() {
       return null;
     }
 
-    const escapedBooks = books
-      .map((book) =>
-        book.replace(
-          /[.*+?^${}()|[\]\\]/g,
-          "\\$&"
+    const escapedBooks =
+      books
+        .map((book) =>
+          book.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+          )
         )
-      )
-      .join("|");
+        .join("|");
 
-    const pattern = new RegExp(
-      `\\b(${escapedBooks})\\s+(\\d+)(?::(\\d+))?\\b`,
-      "i"
-    );
+    const pattern =
+      new RegExp(
+        `\\b(${escapedBooks})\\s+(\\d+)(?::(\\d+))?\\b`,
+        "i"
+      );
 
-    const match = text.match(pattern);
+    const match =
+      text.match(pattern);
 
     // Support "Psalm 23"
+    // even though dropdown uses "Psalms".
+
     if (!match) {
       const psalmPattern =
         /\bPsalm\s+(\d+)(?::(\d+))?\b/i;
@@ -236,23 +257,29 @@ export default function Chat() {
       if (psalmMatch) {
         return {
           book: "Psalms",
-          chapter: Number(psalmMatch[1]),
-          verse: psalmMatch[2]
-            ? Number(psalmMatch[2])
-            : undefined,
+          chapter:
+            Number(psalmMatch[1]),
+          verse:
+            psalmMatch[2]
+              ? Number(
+                  psalmMatch[2]
+                )
+              : undefined,
         };
       }
 
       return null;
     }
 
-    const matchedBook = match[1];
+    const matchedBook =
+      match[1];
 
-    const normalizedBook = books.find(
-      (book) =>
-        book.toLowerCase() ===
-        matchedBook.toLowerCase()
-    );
+    const normalizedBook =
+      books.find(
+        (book) =>
+          book.toLowerCase() ===
+          matchedBook.toLowerCase()
+      );
 
     if (!normalizedBook) {
       return null;
@@ -260,10 +287,12 @@ export default function Chat() {
 
     return {
       book: normalizedBook,
-      chapter: Number(match[2]),
-      verse: match[3]
-        ? Number(match[3])
-        : undefined,
+      chapter:
+        Number(match[2]),
+      verse:
+        match[3]
+          ? Number(match[3])
+          : undefined,
     };
   }
 
@@ -275,14 +304,21 @@ export default function Chat() {
     reference: string
   ) {
     const result =
-      findBibleReference(reference);
+      findBibleReference(
+        reference
+      );
 
     if (!result) {
       return;
     }
 
-    setSelectedBook(result.book);
-    setChapter(result.chapter);
+    setSelectedBook(
+      result.book
+    );
+
+    setChapter(
+      result.chapter
+    );
 
     loadBible(
       result.book,
@@ -295,28 +331,36 @@ export default function Chat() {
   // ===================================================
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [messages, loading]);
+    messagesEndRef.current?.scrollIntoView(
+      {
+        behavior: "smooth",
+      }
+    );
+  }, [
+    messages,
+    loading,
+  ]);
 
   // ===================================================
   // TEXTAREA AUTO SIZE
   // ===================================================
 
   useEffect(() => {
-    const textarea = textareaRef.current;
+    const textarea =
+      textareaRef.current;
 
     if (!textarea) {
       return;
     }
 
-    textarea.style.height = "auto";
+    textarea.style.height =
+      "auto";
 
-    textarea.style.height = `${Math.min(
-      textarea.scrollHeight,
-      160
-    )}px`;
+    textarea.style.height =
+      `${Math.min(
+        textarea.scrollHeight,
+        160
+      )}px`;
   }, [input]);
 
   // ===================================================
@@ -438,11 +482,16 @@ BEHAVIOR:
   async function handleSend(
     customMessage?: string
   ) {
-    const text = (
-      customMessage ?? input
-    ).trim();
+    const text =
+      (
+        customMessage ??
+        input
+      ).trim();
 
-    if (!text || loading) {
+    if (
+      !text ||
+      loading
+    ) {
       return;
     }
 
@@ -452,105 +501,84 @@ BEHAVIOR:
       content: text,
     };
 
-    // Include previous messages AND current message.
+    // IMPORTANT:
+    // Include old messages AND current user message.
+
     const conversationHistory = [
       ...messages,
       userMessage,
     ];
 
-    setMessages((previous) => [
-      ...previous,
-      userMessage,
-    ]);
+    setMessages(
+      (previous) => [
+        ...previous,
+        userMessage,
+      ]
+    );
 
     setInput("");
     setLoading(true);
 
     // Automatically open Bible reference.
-    openBibleReference(text);
+
+    openBibleReference(
+      text
+    );
 
     try {
       // =================================================
       // VERCEL API
       // =================================================
-      //
-      // IMPORTANT:
-      // api/index.js is your backend.
-      //
-      // The browser calls:
-      //
-      // /api/chat
-      //
-      // NOT:
-      // http://localhost:5000/chat
-      //
-      // =================================================
 
-      const response = await fetch(
-        "/api/chat",
-        {
-          method: "POST",
+      const response =
+        await fetch(
+          "/api/chat",
+          {
+            method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-          body: JSON.stringify({
-            message: text,
+            body:
+              JSON.stringify({
+                message: text,
 
-            systemInstruction:
-              AI_SYSTEM_INSTRUCTION,
+                systemInstruction:
+                  AI_SYSTEM_INSTRUCTION,
 
-            history:
-              conversationHistory.map(
-                (message) => ({
-                  role: message.role,
-                  content:
-                    message.content,
-                })
-              ),
-          }),
-        }
-      );
+                history:
+                  conversationHistory.map(
+                    (message) => ({
+                      role:
+                        message.role,
+
+                      content:
+                        message.content,
+                    })
+                  ),
+              }),
+          }
+        );
 
       // =================================================
-      // READ RESPONSE SAFELY
+      // READ RESPONSE
       // =================================================
-
-      const contentType =
-        response.headers.get(
-          "content-type"
-        ) || "";
 
       let data: {
         reply?: string;
         error?: string;
-      } = {};
+      };
 
-      if (
-        contentType.includes(
-          "application/json"
-        )
-      ) {
-        data = await response.json();
-      } else {
-        const textResponse =
-          await response.text();
-
-        console.error(
-          "Non-JSON server response:",
-          textResponse
-        );
-
+      try {
+        data =
+          await response.json();
+      } catch {
         throw new Error(
-          `Server returned ${response.status} instead of JSON.`
+          `Server returned ${response.status} but not valid JSON.`
         );
       }
-
-      // =================================================
-      // CHECK SERVER ERROR
-      // =================================================
 
       if (!response.ok) {
         throw new Error(
@@ -559,30 +587,35 @@ BEHAVIOR:
         );
       }
 
-      // =================================================
-      // GET APRIL RESPONSE
-      // =================================================
-
       const reply =
-        typeof data.reply === "string" &&
-        data.reply.trim()
-          ? data.reply.trim()
-          : "I couldn't generate a response.";
+        data.reply ||
+        "I couldn't generate a response.";
 
-      const assistantMessage: Message = {
-        id: Date.now() + 1,
-        role: "assistant",
-        content: reply,
+      const assistantMessage:
+        Message = {
+        id:
+          Date.now() + 1,
+
+        role:
+          "assistant",
+
+        content:
+          reply,
       };
 
-      setMessages((previous) => [
-        ...previous,
-        assistantMessage,
-      ]);
+      setMessages(
+        (previous) => [
+          ...previous,
+          assistantMessage,
+        ]
+      );
 
       // Automatically open Bible reference
       // mentioned by April.
-      openBibleReference(reply);
+
+      openBibleReference(
+        reply
+      );
     } catch (error) {
       console.error(
         "April error:",
@@ -594,15 +627,21 @@ BEHAVIOR:
           ? error.message
           : "Unknown error occurred.";
 
-      setMessages((previous) => [
-        ...previous,
-        {
-          id: Date.now() + 1,
-          role: "assistant",
-          content:
-            `Sorry, I couldn't get a response.\n\nError: ${errorMessage}`,
-        },
-      ]);
+      setMessages(
+        (previous) => [
+          ...previous,
+          {
+            id:
+              Date.now() + 1,
+
+            role:
+              "assistant",
+
+            content:
+              `Sorry, I couldn't get a response.\n\nError: ${errorMessage}`,
+          },
+        ]
+      );
     } finally {
       setLoading(false);
 
@@ -624,6 +663,7 @@ BEHAVIOR:
       !event.shiftKey
     ) {
       event.preventDefault();
+
       handleSend();
     }
   }
@@ -644,12 +684,16 @@ BEHAVIOR:
   function changeBook(
     event: React.ChangeEvent<HTMLSelectElement>
   ) {
-    const book = event.target.value;
+    const book =
+      event.target.value;
 
     setSelectedBook(book);
     setChapter(1);
 
-    loadBible(book, 1);
+    loadBible(
+      book,
+      1
+    );
   }
 
   // ===================================================
@@ -660,9 +704,13 @@ BEHAVIOR:
     event: React.ChangeEvent<HTMLSelectElement>
   ) {
     const chapterNumber =
-      Number(event.target.value);
+      Number(
+        event.target.value
+      );
 
-    setChapter(chapterNumber);
+    setChapter(
+      chapterNumber
+    );
 
     loadBible(
       selectedBook,
@@ -675,7 +723,8 @@ BEHAVIOR:
   // ===================================================
 
   function nextChapter() {
-    const next = chapter + 1;
+    const next =
+      chapter + 1;
 
     setChapter(next);
 
@@ -694,9 +743,12 @@ BEHAVIOR:
       return;
     }
 
-    const previous = chapter - 1;
+    const previous =
+      chapter - 1;
 
-    setChapter(previous);
+    setChapter(
+      previous
+    );
 
     loadBible(
       selectedBook,
@@ -710,7 +762,8 @@ BEHAVIOR:
 
   function toggleAI() {
     setIsAIOpen(
-      (previous) => !previous
+      (previous) =>
+        !previous
     );
   }
 
