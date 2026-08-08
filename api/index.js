@@ -65,48 +65,6 @@ referring to.
 
 Do NOT treat a follow-up question as a completely new conversation.
 
-Example:
-
-User:
-"What is faith?"
-
-April:
-"Faith is..."
-
-User:
-"Sugpon."
-
-April:
-"Sure. Continuing from what we discussed about faith..."
-
-Another example:
-
-User:
-"Explain John 3:16."
-
-April:
-[explains John 3:16]
-
-User:
-"What does that mean?"
-
-April:
-[explains John 3:16 based on the previous conversation]
-
-Another example:
-
-User:
-"Tell me about prayer."
-
-April:
-[answers]
-
-User:
-"Why is it important?"
-
-April:
-[understands that "it" means prayer]
-
 If the user's message is short, incomplete, uses pronouns,
 or refers to something previously discussed, use the conversation
 history to understand its meaning.
@@ -138,9 +96,9 @@ If asked "Are you human?", answer:
 
 Never introduce yourself as:
 
-- "a large language model trained by Google"
-- "Google Gemini"
-- "Assistant"
+- a large language model trained by Google
+- Google Gemini
+- Assistant
 
 Your name is April.
 
@@ -184,7 +142,7 @@ BIBLE REFERENCES:
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "ok",
-    message: "April AI backend is running on Vercel.",
+    message: "April AI backend is running.",
   });
 });
 
@@ -192,7 +150,7 @@ app.get("/", (req, res) => {
 // HEALTH CHECK
 // =====================================================
 
-app.get("/api/health", (req, res) => {
+app.get("/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     geminiConfigured: Boolean(GEMINI_API_KEY),
@@ -202,8 +160,20 @@ app.get("/api/health", (req, res) => {
 // =====================================================
 // CHAT
 // =====================================================
+// IMPORTANT:
+//
+// Because this file is api/index.js on Vercel:
+//
+// Frontend URL:
+// /api/chat
+//
+// Inside Express:
+// /chat
+//
+// Do NOT use app.post("/api/chat") here.
+// =====================================================
 
-app.post("/api/chat", async (req, res) => {
+app.post("/chat", async (req, res) => {
   try {
     const {
       message,
@@ -248,13 +218,15 @@ ${APRIL_SYSTEM_INSTRUCTION}
 
 Additional instructions from the React application:
 
-${typeof systemInstruction === "string"
-  ? systemInstruction
-  : ""}
+${
+  typeof systemInstruction === "string"
+    ? systemInstruction
+    : ""
+}
 `;
 
     // -------------------------------------------------
-    // CONVERT HISTORY
+    // CONVERT CHAT HISTORY
     // -------------------------------------------------
 
     const contents = [];
@@ -269,7 +241,8 @@ ${typeof systemInstruction === "string"
           continue;
         }
 
-        const cleanContent = item.content.trim();
+        const cleanContent =
+          item.content.trim();
 
         if (!cleanContent) {
           continue;
@@ -292,8 +265,11 @@ ${typeof systemInstruction === "string"
     }
 
     // -------------------------------------------------
-    // MAKE SURE CURRENT USER MESSAGE EXISTS
+    // MAKE SURE CURRENT MESSAGE EXISTS
     // -------------------------------------------------
+
+    const cleanMessage =
+      message.trim();
 
     const lastMessage =
       contents[contents.length - 1];
@@ -302,14 +278,14 @@ ${typeof systemInstruction === "string"
       lastMessage &&
       lastMessage.role === "user" &&
       lastMessage.parts?.[0]?.text ===
-        message.trim();
+        cleanMessage;
 
     if (!currentMessageAlreadyIncluded) {
       contents.push({
         role: "user",
         parts: [
           {
-            text: message.trim(),
+            text: cleanMessage,
           },
         ],
       });
@@ -348,9 +324,13 @@ ${typeof systemInstruction === "string"
     // GET RESPONSE
     // -------------------------------------------------
 
-    const reply = result?.text;
+    const reply =
+      result?.text;
 
-    console.log("April response:", reply);
+    console.log(
+      "April response:",
+      reply
+    );
 
     if (
       typeof reply !== "string" ||
@@ -363,12 +343,13 @@ ${typeof systemInstruction === "string"
     }
 
     // -------------------------------------------------
-    // RETURN TO REACT
+    // RETURN RESPONSE
     // -------------------------------------------------
 
     return res.status(200).json({
       reply: reply.trim(),
     });
+
   } catch (error) {
     console.error(
       "GEMINI ERROR:",
@@ -382,20 +363,6 @@ ${typeof systemInstruction === "string"
     });
   }
 });
-
-// =====================================================
-// LOCAL DEVELOPMENT
-// =====================================================
-
-if (require.main === module) {
-  const PORT = process.env.PORT || 5000;
-
-  app.listen(PORT, () => {
-    console.log(
-      `April AI backend running at http://localhost:${PORT}`
-    );
-  });
-}
 
 // =====================================================
 // VERCEL EXPORT
